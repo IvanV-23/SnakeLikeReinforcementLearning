@@ -38,19 +38,23 @@ class NavigationEnv:
     def get_state(self):
         dx_food = (self.food_x - self.head_x) / self.width
         dy_food = (self.food_y - self.head_y) / self.height
-
+        
+        # Wall dangers (existing)
         danger_up = 1 - (self.head_y / self.height)
         danger_down = 1 - ((self.height - self.head_y - 1) / self.height)
         danger_left = 1 - (self.head_x / self.width)
         danger_right = 1 - ((self.width - self.head_x - 1) / self.width)
-
+        
+        # NEW: body dangers
+        body_up = 1 if (self.head_x, self.head_y-1) in self.body else 0
+        body_down = 1 if (self.head_x, self.head_y+1) in self.body else 0
+        body_left = 1 if (self.head_x-1, self.head_y) in self.body else 0
+        body_right = 1 if (self.head_x+1, self.head_y) in self.body else 0
+        
         return [
-            dx_food,
-            dy_food,
-            danger_up,
-            danger_down,
-            danger_left,
-            danger_right
+            dx_food, dy_food,
+            danger_up, danger_down, danger_left, danger_right,
+            body_up, body_down, body_left, body_right  # NEW: 10-dim state now
         ]
 
     def step(self, action):
@@ -107,7 +111,7 @@ class NavigationEnv:
         # Food eaten
         if self.head_x == self.food_x and self.head_y == self.food_y:
             self.score += 1
-            reward += 5.0
+            reward += 10.0
             info["ate_food"] = True
 
             # Add new body segment at the last position (or prev_head if first)

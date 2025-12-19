@@ -6,12 +6,12 @@ class NavNet(nn.Module):
     def __init__(self):
         super().__init__()
         
-        # Input (6 state features) → Hidden 1
-        self.fc1 = nn.Linear(6, 32)      # Increased from 16
+        # Input (10 state features) → Hidden 1
+        self.fc1 = nn.Linear(10, 64)      # Increased from 16
         # Hidden 1 → Hidden 2  
-        self.fc2 = nn.Linear(32, 16)     # NEW middle layer
+        self.fc2 = nn.Linear(64, 32)     # NEW middle layer
         # Hidden 2 → Output (4 actions)
-        self.fc3 = nn.Linear(16, 4)      # Renamed from fc2
+        self.fc3 = nn.Linear(32, 4)      # Renamed from fc2
         
     def forward(self, x):
         x = torch.relu(self.fc1(x))      # Hidden 1 activation
