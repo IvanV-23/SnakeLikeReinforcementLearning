@@ -18,3 +18,5 @@ dist/
 # IDE/editor settings (optional, but usually nice)
 .vscode/
 .idea/
+#TensorBoard logs
+runs/
