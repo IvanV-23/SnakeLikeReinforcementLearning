@@ -23,10 +23,10 @@ if __name__ == "__main__":
     state = env.reset()
     done = False
 
-    N_EPISODES = 1000  # number of episodes to train
-    epsilon = 1.0       # start with high exploration
-    epsilon_min = 0.05
-    epsilon_decay = 0.995
+    N_EPISODES = 10000  # number of episodes to train
+    epsilon_start = 1.0
+    epsilon_end   = 0.05
+    epsilon_decay = 5000  # steps
 
 
     global_step = 0
@@ -37,12 +37,23 @@ if __name__ == "__main__":
         total_reward = 0
 
         while not done:
-            env.render_pygame()  # Print the board
-
+            #env.render_pygame()  # Print the board
+            env.render()#for faster traiining, comment this line out
             state_tensor = torch.tensor(state, dtype=torch.float32)
+            
+            # Update epsilon with exponential decay
+            epsilon = epsilon_end + (epsilon_start - epsilon_end) * \
+                    torch.exp(torch.tensor(-global_step / epsilon_decay)).item()
 
+            # Optional: reduce exploration more when snake is long
+            length = 1 + len(env.body)
+            if length >= 4:
+                effective_epsilon = max(epsilon * 0.5, 0.02)
+            else:
+                effective_epsilon = epsilon
+            
             # ----- Epsilon-greedy action selection -----
-            if random.random() < epsilon:
+            if random.random() < effective_epsilon:
                 action = random.randint(0, 3)  # explore: random action
             else:
                 q_values = model(state_tensor)
@@ -75,6 +86,8 @@ if __name__ == "__main__":
             optimizer.step()
 
             state = next_state
+            global_step += 1
+
 
             print(f"Action: {action}, Reward: {reward}, Loss: {loss.item():.4f}")
 

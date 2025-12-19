@@ -87,6 +87,12 @@ class NavigationEnv:
             self.head_y < 0 or self.head_y >= self.height
         ):
             return self.get_state(), -1.0, True, info
+        # --- NEW: self-collision check ---
+        
+        if (self.head_x, self.head_y) in self.body:
+            # head ran into the body
+            return self.get_state(), -1.0, True, info
+        # ---------------------------------
 
         new_distance = abs(self.head_x - self.food_x) + abs(self.head_y - self.food_y)
         delta = old_distance - new_distance

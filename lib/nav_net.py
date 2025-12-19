@@ -2,18 +2,19 @@ import torch
 import torch.nn as nn
 
 class NavNet(nn.Module):
-    """A simple feedforward neural network for navigation tasks.
-
-    Args:
-        nn (Module): PyTorch neural network module.
-    """
+    """A simple feedforward neural network for navigation tasks."""
     def __init__(self):
         super().__init__()
-
-        self.fc1 = nn.Linear(6, 16)
-        self.fc2 = nn.Linear(16, 4)
-
+        
+        # Input (6 state features) → Hidden 1
+        self.fc1 = nn.Linear(6, 32)      # Increased from 16
+        # Hidden 1 → Hidden 2  
+        self.fc2 = nn.Linear(32, 16)     # NEW middle layer
+        # Hidden 2 → Output (4 actions)
+        self.fc3 = nn.Linear(16, 4)      # Renamed from fc2
+        
     def forward(self, x):
-        x = torch.relu(self.fc1(x))
-        x = self.fc2(x)
+        x = torch.relu(self.fc1(x))      # Hidden 1 activation
+        x = torch.relu(self.fc2(x))      # NEW: Hidden 2 activation
+        x = self.fc3(x)                  # Output (Q-values)
         return x
