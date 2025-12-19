@@ -36,26 +36,54 @@ class NavigationEnv:
         return self.get_state()
 
     def get_state(self):
+        # 1) 5x5 window centered on head
+        radius = 2
+        grid_values = []
+
+        for dy in range(-radius, radius + 1):      # -2,-1,0,1,2
+            for dx in range(-radius, radius + 1):  # -2,-1,0,1,2
+                x = self.head_x + dx
+                y = self.head_y + dy
+
+                # Encode cell
+                if x < 0 or x >= self.width or y < 0 or y >= self.height:
+                    val = 1  # wall
+                elif (x, y) == (self.head_x, self.head_y):
+                    val = 4  # head (optional)
+                elif (x, y) in self.body:
+                    val = 2  # body
+                elif (x, y) == (self.food_x, self.food_y):
+                    val = 3  # food
+                else:
+                    val = 0  # empty
+
+                grid_values.append(val)
+
+        # Normalize to [0,1]
+        grid_values = [v / 4.0 for v in grid_values]
+
+        # 2) Your existing scalar features
         dx_food = (self.food_x - self.head_x) / self.width
         dy_food = (self.food_y - self.head_y) / self.height
-        
-        # Wall dangers (existing)
+
         danger_up = 1 - (self.head_y / self.height)
         danger_down = 1 - ((self.height - self.head_y - 1) / self.height)
         danger_left = 1 - (self.head_x / self.width)
         danger_right = 1 - ((self.width - self.head_x - 1) / self.width)
-        
-        # NEW: body dangers
-        body_up = 1 if (self.head_x, self.head_y-1) in self.body else 0
-        body_down = 1 if (self.head_x, self.head_y+1) in self.body else 0
-        body_left = 1 if (self.head_x-1, self.head_y) in self.body else 0
-        body_right = 1 if (self.head_x+1, self.head_y) in self.body else 0
-        
-        return [
+
+        body_up = 1 if (self.head_x, self.head_y - 1) in self.body else 0
+        body_down = 1 if (self.head_x, self.head_y + 1) in self.body else 0
+        body_left = 1 if (self.head_x - 1, self.head_y) in self.body else 0
+        body_right = 1 if (self.head_x + 1, self.head_y) in self.body else 0
+
+        scalar_features = [
             dx_food, dy_food,
             danger_up, danger_down, danger_left, danger_right,
-            body_up, body_down, body_left, body_right  # NEW: 10-dim state now
+            body_up, body_down, body_left, body_right
         ]
+
+        # 3) Final state: grid + scalars
+        return grid_values + scalar_features
 
     def step(self, action):
         info = {"ate_food": False}

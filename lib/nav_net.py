@@ -5,9 +5,9 @@ class NavNet(nn.Module):
     """A simple feedforward neural network for navigation tasks."""
     def __init__(self):
         super().__init__()
-        
-        # Input (10 state features) → Hidden 1
-        self.fc1 = nn.Linear(10, 64)      # Increased from 16
+
+        # Input (35 state features) → Hidden 1
+        self.fc1 = nn.Linear(35, 64)      # Increased from 16
         # Hidden 1 → Hidden 2  
         self.fc2 = nn.Linear(64, 32)     # NEW middle layer
         # Hidden 2 → Output (4 actions)
