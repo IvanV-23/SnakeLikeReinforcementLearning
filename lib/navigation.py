@@ -1,7 +1,7 @@
 import random
 
 import pygame
-
+import numpy as np
 
 MAX_STEPS = 200
 CELL_SIZE = 30
@@ -36,11 +36,11 @@ class NavigationEnv:
         return self.get_state()
 
     def get_state(self):
-        # 1) 5x5 window centered on head
+        # 1) 5x5 window centered on head (KEEP AS IS)
         radius = 2
         grid_values = []
 
-        for dy in range(-radius, radius + 1):      # -2,-1,0,1,2
+        for dy in range(-radius, radius + 1):     # -2,-1,0,1,2
             for dx in range(-radius, radius + 1):  # -2,-1,0,1,2
                 x = self.head_x + dx
                 y = self.head_y + dy
@@ -62,7 +62,7 @@ class NavigationEnv:
         # Normalize to [0,1]
         grid_values = [v / 4.0 for v in grid_values]
 
-        # 2) Your existing scalar features
+        # 2) Your existing scalar features (KEEP AS IS)
         dx_food = (self.food_x - self.head_x) / self.width
         dy_food = (self.food_y - self.head_y) / self.height
 
@@ -82,8 +82,24 @@ class NavigationEnv:
             body_up, body_down, body_left, body_right
         ]
 
-        # 3) Final state: grid + scalars
-        return grid_values + scalar_features
+        # 3) NEW: Future danger features (8 new dims)
+        danger_straight = [0.0] * 4  # 0=up,1=down,2=left,3=right
+        danger_right = [0.0] * 4
+        
+        directions = [(0,-1), (0,1), (-1,0), (1,0)]  # up,down,left,right
+        
+        for direction in range(4):
+            # Straight ahead (3 cells)
+            danger_straight[direction] = 1.0 if self._is_danger(direction, distance=3) else 0.0
+            # Right turn ahead (2 cells in right direction)
+            right_dir = (direction + 1) % 4
+            danger_right[direction] = 1.0 if self._is_danger(right_dir, distance=2) else 0.0
+        
+        danger_features = danger_straight + danger_right
+
+        # 4) Final state: grid + scalars + NEW dangers
+        state = grid_values + scalar_features + danger_features
+        return np.array(state, dtype=np.float32)
 
     def step(self, action):
         info = {"ate_food": False}
@@ -149,8 +165,15 @@ class NavigationEnv:
                 self.body.append(prev_head)
 
             # Spawn new food
-            self.food_x = random.randint(0, self.width - 1)
-            self.food_y = random.randint(0, self.height - 1)
+            #self.food_x = random.randint(0, self.width - 1)
+            #self.food_y = random.randint(0, self.height - 1)
+
+            occupied = {(self.head_x, self.head_y)} | set(self.body)
+            while True:
+                self.food_x = random.randint(0, self.width - 1)
+                self.food_y = random.randint(0, self.height - 1)
+                if (self.food_x, self.food_y) not in occupied:
+                    break
 
         return self.get_state(), reward, done, info
 
@@ -205,5 +228,17 @@ class NavigationEnv:
 
                 pygame.draw.rect(self.screen, color, rect)
                 pygame.draw.rect(self.screen, (60, 60, 60), rect, 1)
+                
+        font = pygame.font.Font(None, 36)  # Use default font, size 36
+        score_text = font.render(f"Score: {self.score}", True, (255, 255, 255))
+        score_rect = score_text.get_rect(topleft=(10, 10))  # Top-left corner
+        self.screen.blit(score_text, score_rect)
+
         pygame.display.flip()
         self.clock.tick(fps)
+
+    def _is_danger(self, direction, distance):
+        dx, dy = [(0,-1),(0,1),(-1,0),(1,0)][direction]
+        x, y = self.head_x + dx * distance, self.head_y + dy * distance
+        return (x < 0 or x >= self.width or y < 0 or y >= self.height or 
+                (x, y) in self.body)

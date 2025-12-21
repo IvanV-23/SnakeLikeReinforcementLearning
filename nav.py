@@ -11,7 +11,7 @@ env.init_pygame()  # initialize window once
 model = NavNet()  # must match the original network definition
 
 # 2. Load the saved weights
-model.load_state_dict(torch.load("snake_model_dqn.pth"))
+model.load_state_dict(torch.load("snake_model_dqn_vec.pth"))
 model.eval()  # set to evaluation mode (important if using dropout/batchnorm)
 
 # 3. Use the model to choose actions

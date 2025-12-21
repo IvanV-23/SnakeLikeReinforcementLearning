@@ -1,4 +1,5 @@
 import random
+from sympy import evaluate
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -9,6 +10,7 @@ from torch.utils.tensorboard import SummaryWriter
 from lib.navigation import NavigationEnv
 from lib.nav_net import NavNet
 from lib.replay_buffer import ReplayBuffer
+from lib.evaluation import evaluate
 
 if __name__ == "__main__":
     env = NavigationEnv(training=True)
@@ -34,10 +36,12 @@ if __name__ == "__main__":
     epsilon_start = 1.0
     epsilon_end = 0.05
     epsilon_decay = 50_000    # slower decay for RL
-    N_EPISODES = 5000
+    N_EPISODES = 10000
 
     replay_buffer = ReplayBuffer(buffer_capacity)
     global_step = 0
+
+    EVAL_EVERY = 50  # episodes
 
     for episode in range(N_EPISODES):
         state = env.reset()
@@ -123,6 +127,9 @@ if __name__ == "__main__":
         writer.add_scalar("episode/reward", episode_reward, episode)
         writer.add_scalar("episode/length", episode_length, episode)
         print(f"Episode {episode} | reward={episode_reward:.2f} | length={episode_length} | eps={epsilon:.3f}")
+
+        if (episode + 1) % EVAL_EVERY == 0:
+            evaluate(policy_net, env, writer, eval_episodes=5, global_step=global_step)
 
     torch.save(policy_net.state_dict(), "snake_model_dqn.pth")
     print("Model saved!")
