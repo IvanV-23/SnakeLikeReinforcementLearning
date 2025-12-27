@@ -7,9 +7,9 @@ from torch.utils.tensorboard import SummaryWriter
 
 
 
-from lib.navigation import NavigationEnv
-from lib.nav_net import NavNet
-from lib.replay_buffer import ReplayBuffer
+from lib.enviroment.navigation import NavigationEnv
+from lib.net.nav_net import NavNet
+from lib.buffer.replay_buffer import ReplayBuffer
 from lib.evaluation import evaluate
 
 if __name__ == "__main__":
@@ -95,10 +95,18 @@ if __name__ == "__main__":
                 q_value = q_values.gather(1, actions.unsqueeze(1)).squeeze(1)
 
                 # Target Q-values from target_net
+                #with torch.no_grad():
+                #    next_q_values = target_net(next_states)        # (B, 4)
+                #    max_next_q = next_q_values.max(1)[0] # ← OLD: target picks AND evaluates
+                #    target = rewards + gamma * max_next_q * (1 - dones)
+
                 with torch.no_grad():
-                    next_q_values = target_net(next_states)        # (B, 4)
-                    max_next_q = next_q_values.max(1)[0]
-                    target = rewards + gamma * max_next_q * (1 - dones)
+                    # 1. policy_net picks best actions for next states
+                    next_actions = policy_net(next_states).max(1)[1].unsqueeze(1)
+                    # 2. target_net evaluates those actions
+                    next_q_values = target_net(next_states).gather(1, next_actions).squeeze(1)
+                    # 3. Double DQN target
+                    target = rewards + gamma * next_q_values * (1 - dones)
 
                 loss = loss_fn(q_value, target)
 

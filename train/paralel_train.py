@@ -5,10 +5,10 @@ from torch.utils.tensorboard import SummaryWriter
 import random
 import numpy as np
 
-from lib.vector_enviroment import VecNavigationEnv
-from lib.nav_net import NavNet
-from lib.replay_buffer import ReplayBuffer
-from lib.single_evaluation import single_evaluate
+from lib.enviroment.vector_enviroment import VecNavigationEnv
+from lib.net.nav_net import NavNet
+from lib.buffer.replay_buffer import ReplayBuffer
+from lib.evaluation.single_evaluation import single_evaluate
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -83,10 +83,16 @@ for episode in range(N_EPISODES):
             q_values = policy_net(states_b)                      # (B,4)
             q_value = q_values.gather(1, actions_b.unsqueeze(1)).squeeze(1)
 
+            #with torch.no_grad():
+            #    next_q_values = target_net(next_states_b)
+            #    max_next_q = next_q_values.max(1)[0]
+            #    target = rewards_b + gamma * max_next_q * (1 - dones_b)
+
             with torch.no_grad():
-                next_q_values = target_net(next_states_b)
-                max_next_q = next_q_values.max(1)[0]
-                target = rewards_b + gamma * max_next_q * (1 - dones_b)
+                next_actions = policy_net(next_states_b).max(1)[1].unsqueeze(1)
+                next_q_values = target_net(next_states_b).gather(1, next_actions).squeeze(1)
+                target = rewards_b + gamma * next_q_values * (1 - dones_b)
+
 
             loss = loss_fn(q_value, target)
             optimizer.zero_grad()
@@ -111,7 +117,7 @@ for episode in range(N_EPISODES):
     #    single_evaluate(policy_net, writer, global_step, n_episodes=5, device=device)
 
 # -------- Save model --------
-torch.save(policy_net.state_dict(), "snake_model_dqn_vec.pth")
+torch.save(policy_net.state_dict(), "snake_model_dqn_vec_double_dqn.pth")
 print("Saved model to snake_model_dqn_vec.pth")
 
 writer.close()

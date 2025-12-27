@@ -1,6 +1,6 @@
 import torch
 
-from lib.navigation import NavigationEnv
+from lib.enviroment.navigation import NavigationEnv
 
 
 def single_evaluate(policy_net, writer, global_step, n_episodes=5, device=None):

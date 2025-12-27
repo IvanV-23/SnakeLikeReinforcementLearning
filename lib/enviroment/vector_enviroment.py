@@ -1,5 +1,5 @@
 import numpy as np
-from lib.navigation import NavigationEnv
+from lib.enviroment.navigation import NavigationEnv
 
 class VecNavigationEnv:
     def __init__(self, n_envs=4):

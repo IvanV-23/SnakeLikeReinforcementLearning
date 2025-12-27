@@ -20,3 +20,8 @@ dist/
 .idea/
 #TensorBoard logs
 runs/
+#auxiliary files
+*.pt
+*.zip
+#Models (because of size, they need to be handled separately)
+*.pth

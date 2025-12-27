@@ -3,8 +3,8 @@
 # 1. Recreate the network structure
 import torch
 import time
-from lib.nav_net import NavNet
-from lib.navigation import NavigationEnv
+from lib.net.nav_net import NavNet
+from lib.enviroment.navigation import NavigationEnv
 
 env = NavigationEnv(training=False)  # Your environment
 env.init_pygame()  # initialize window once
