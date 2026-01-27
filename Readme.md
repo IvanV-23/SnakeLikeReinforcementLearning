@@ -1,4 +1,4 @@
-# reinforcement learning Snake
+# Reinforcement Learning Snake
 
 This is the repo of the Snake Reinforment Learning Project
 
